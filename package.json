@@ -1,0 +1,9 @@
+{
+  "name": "daily-top-news",
+  "version": "1.0.0",
+  "private": true,
+  "description": "每日全球5条关键新闻 PWA",
+  "dependencies": {
+    "rss-parser": "^3.13.0"
+  }
+}
