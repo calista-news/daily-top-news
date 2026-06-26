@@ -12,10 +12,41 @@ const FEEDS = [
 const parser = new Parser({
   timeout: 5000,
   headers: { 'User-Agent': 'Mozilla/5.0 (DailyTopNews PWA)' },
+  customFields: {
+    item: [
+      ['media:thumbnail', 'mediaThumbnail'],
+      ['media:content', 'mediaContent', { keepArray: true }],
+    ],
+  },
 });
 
 function cleanSnippet(text) {
   return String(text || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 170);
+}
+
+function pickImage(item) {
+  let url = '';
+  if (item.mediaThumbnail && item.mediaThumbnail.$ && item.mediaThumbnail.$.url) {
+    url = item.mediaThumbnail.$.url;
+  }
+  if (!url && item.mediaContent) {
+    const arr = Array.isArray(item.mediaContent) ? item.mediaContent : [item.mediaContent];
+    let best = -1;
+    for (const m of arr) {
+      const a = m && m.$;
+      if (a && a.url) {
+        const w = parseInt(a.width || '0', 10);
+        if (w >= best) { best = w; url = a.url; }
+      }
+    }
+  }
+  if (!url && item.enclosure && item.enclosure.url) url = item.enclosure.url;
+  if (!url) {
+    const m = String(item['content:encoded'] || item.content || '').match(/<img[^>]+src="([^"]+)"/i);
+    if (m) url = m[1];
+  }
+  url = url.replace(/\/(standard|news)\/\d+\//, '/$1/976/');
+  return url;
 }
 
 async function translateToZh(text) {
@@ -48,6 +79,7 @@ async function fetchFeed(feed) {
     link: item.link || '#',
     source: feed.name,
     category: feed.category,
+    image: pickImage(item),
     isoDate: item.isoDate || item.pubDate || null,
     snippet: cleanSnippet(item.contentSnippet || item.summary || item.content),
   }));
@@ -82,7 +114,6 @@ module.exports = async (req, res) => {
       })
     );
 
-    // 翻译全部成功才缓存 6 小时；有漏翻的只缓存 15 分钟，尽快重试自愈
     const allTranslated = picked.length > 0 && picked.every((it) => it.titleZh);
     res.setHeader('Cache-Control', allTranslated
       ? 's-maxage=21600, stale-while-revalidate=86400'
