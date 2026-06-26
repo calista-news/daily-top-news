@@ -89,42 +89,6 @@ async function translateToZh(text) {
   return '';
 }
 
-function decodeEntities(s) {
-  return String(s || '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&nbsp;/g, ' ')
-    .replace(/&#0?39;|&apos;|&rsquo;|&lsquo;/g, "'")
-    .replace(/&ldquo;|&rdquo;/g, '"')
-    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
-    .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(parseInt(d, 10)));
-}
-
-async function fetchArticleSummary(url) {
-  if (!url || url === '#') return '';
-  try {
-    const r = await fetch(url, {
-      signal: AbortSignal.timeout(4500),
-      headers: { 'User-Agent': 'Mozilla/5.0 (DailyTopNews)' },
-    });
-    if (!r.ok) return '';
-    const html = await r.text();
-    const parts = [];
-    const og = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)
-            || html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i);
-    if (og) parts.push(decodeEntities(og[1]).trim());
-    const paras = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
-      .map((m) => decodeEntities(m[1].replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim())
-      .filter((t) => t.length > 70 && !/cookie|sign up|sign in|newsletter|subscribe|advertisement|enable javascript|©|all rights|follow us/i.test(t));
-    for (const p of paras) {
-      if (parts.join(' ').length > 520) break;
-      if (!parts.some((x) => x.slice(0, 50) === p.slice(0, 50))) parts.push(p);
-    }
-    return parts.join(' ').replace(/\s+/g, ' ').trim().slice(0, 560);
-  } catch (e) {
-    return '';
-  }
-}
-
 async function fetchFeed(feed) {
   const data = await parser.parseURL(feed.url);
   return (data.items || []).slice(0, 4).map((item) => ({
@@ -164,8 +128,6 @@ module.exports = async (req, res) => {
 
     await Promise.all(
       picked.map(async (it) => {
-        const richer = await fetchArticleSummary(it.link);
-        if (richer && richer.length > it.snippet.length) it.snippet = richer;
         const [titleZh, snippetZh] = await Promise.all([
           translateToZh(it.title),
           translateToZh(it.snippet),
