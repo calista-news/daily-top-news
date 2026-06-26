@@ -24,6 +24,23 @@ function cleanSnippet(text) {
   return String(text || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 170);
 }
 
+const STOP = new Set(['the','a','an','of','to','in','on','for','and','or','as','at','by','with','from','is','are','be','was','were','over','after','before','its','his','her','their','that','this','new','says','say','will','amid','into','out','up','down']);
+function keywords(title) {
+  return new Set(
+    String(title).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+      .filter((w) => w.length > 2 && !STOP.has(w))
+  );
+}
+function sameTopic(t1, t2) {
+  const a = keywords(t1), b = keywords(t2);
+  if (a.size < 2 || b.size < 2) return false;
+  let inter = 0;
+  for (const w of a) if (b.has(w)) inter++;
+  const union = a.size + b.size - inter;
+  const overlapMin = inter / Math.min(a.size, b.size);
+  return inter >= 2 && (inter / union >= 0.35 || overlapMin >= 0.55);
+}
+
 function pickImage(item) {
   let url = '';
   if (item.mediaThumbnail && item.mediaThumbnail.$ && item.mediaThumbnail.$.url) {
@@ -97,10 +114,16 @@ module.exports = async (req, res) => {
     const cats = ['politics', 'business', 'tech'].filter((c) => byCat[c]);
     const picked = [];
     let i = 0;
-    while (picked.length < 5 && cats.some((c) => byCat[c].length)) {
+    let guard = 0;
+    while (picked.length < 5 && cats.some((c) => byCat[c].length) && guard < 300) {
+      guard++;
       const c = cats[i % cats.length];
-      if (byCat[c].length) picked.push(byCat[c].shift());
       i++;
+      const bucket = byCat[c];
+      if (!bucket.length) continue;
+      const cand = bucket.shift();
+      if (picked.some((p) => sameTopic(p.title, cand.title))) continue;
+      picked.push(cand);
     }
 
     await Promise.all(
