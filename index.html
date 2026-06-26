@@ -15,10 +15,19 @@
   <link rel="icon" href="/icon.svg" type="image/svg+xml" />
 
   <style>
+    /* 自托管 Lora 可变字体（优雅衬线，用于英文标题） */
+    @font-face {
+      font-family: 'Lora';
+      src: url('/fonts/Lora.ttf') format('truetype');
+      font-weight: 400 700;
+      font-style: normal;
+      font-display: swap;
+    }
     :root {
       --bg: #ffffff;
       --ink: #0e0e10;
       --muted: #9aa0a6;
+      --serif: 'Lora', Georgia, "Times New Roman", "Songti SC", serif;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
@@ -66,7 +75,8 @@
       padding: 6px 12px; border-radius: 999px;
     }
     .content { position: absolute; left: 0; right: 0; bottom: 0; padding: 20px 18px 18px; }
-    .title { font-size: 21px; font-weight: 800; line-height: 1.28; margin: 0 0 5px;
+    .title { font-family: var(--serif); font-size: 23px; font-weight: 600; line-height: 1.25; margin: 0 0 6px;
+      letter-spacing: .2px;
       display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     .title-zh { font-size: 15.5px; font-weight: 600; line-height: 1.4; margin: 0 0 10px; color: rgba(255,255,255,.92);
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
