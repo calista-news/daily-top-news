@@ -91,7 +91,8 @@
       display: flex; align-items: center; gap: 8px;
     }
     .brief-label::before { content: ""; width: 18px; height: 2px; background: var(--ink); border-radius: 2px; }
-    .brief-zh { font-size: 15px; line-height: 1.75; color: #222; margin: 0; }
+    .brief-zh { font-size: 15px; line-height: 1.75; color: #222; margin: 0;
+      display: -webkit-box; -webkit-line-clamp: 14; -webkit-box-orient: vertical; overflow: hidden; }
     .brief-en { font-size: 12.5px; line-height: 1.6; color: var(--muted); margin: 12px 0 0; }
     .brief-empty { font-size: 13.5px; color: var(--muted); margin: auto 0; }
 
@@ -143,9 +144,7 @@
     function esc(s) { return String(s || '').replace(/"/g, '&quot;'); }
 
     function brief(n) {
-      if (n.snippetZh) {
-        return `<p class="brief-zh">${n.snippetZh}</p>` + (n.snippet ? `<p class="brief-en">${n.snippet}</p>` : '');
-      }
+      if (n.snippetZh) return `<p class="brief-zh">${n.snippetZh}</p>`;
       if (n.snippet) return `<p class="brief-zh">${n.snippet}</p>`;
       return `<div class="brief-empty">暂无简报内容</div>`;
     }
