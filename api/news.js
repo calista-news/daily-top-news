@@ -82,7 +82,12 @@ module.exports = async (req, res) => {
       })
     );
 
-    res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=86400');
+    // 翻译全部成功才缓存 6 小时；有漏翻的只缓存 15 分钟，尽快重试自愈
+    const allTranslated = picked.length > 0 && picked.every((it) => it.titleZh);
+    res.setHeader('Cache-Control', allTranslated
+      ? 's-maxage=21600, stale-while-revalidate=86400'
+      : 's-maxage=900, stale-while-revalidate=3600');
+
     res.status(200).json({ updatedAt: new Date().toISOString(), count: picked.length, items: picked });
   } catch (err) {
     res.status(200).json({ updatedAt: new Date().toISOString(), count: 0, items: [], error: String((err && err.message) || err) });
