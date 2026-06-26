@@ -1,5 +1,5 @@
 // Service Worker —— 让网页变成可离线使用的 PWA
-const CACHE = 'dtn-v7';
+const CACHE = 'dtn-v8';
 const SHELL = ['/', '/index.html', '/manifest.json', '/icon.svg'];
 
 self.addEventListener('install', (e) => {
